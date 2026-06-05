@@ -6,6 +6,8 @@
 
 # 快速开始
 
+> **注意**：作为本仓库的维护者，在首次使用前需将可复用 Workflow 部署到 `.github/workflows/` 目录。详见文末 [仓库管理员部署说明](#仓库管理员部署说明)。
+
 作为最终用户，你**无需复制本仓库的全部内容**。只需在你的目标仓库中进行以下两步操作：
 
 ## 第一步：配置 Secrets 和 Variables
@@ -136,5 +138,40 @@ jobs:
     env:
       HTTP_PROXY: ${{ vars.HTTP_PROXY }}
       HTTPS_PROXY: ${{ vars.HTTPS_PROXY }}
+```
+
+# 仓库管理员部署说明
+
+> 以下内容仅供本仓库（`jijiechen/ai-agent-on-actions`）管理员参考。最终用户无需关心。
+
+## 可复用 Workflow 部署
+
+由于 GitHub Actions 运行环境的 `GITHUB_TOKEN` 默认缺少 `workflows` 写入权限，可复用 Workflow 文件无法由 CI 自动部署到 `.github/workflows/` 目录。
+
+请仓库管理员手动执行：
+
+```bash
+cp reusable-workflow.yml .github/workflows/ai-agent.yml
+git add .github/workflows/ai-agent.yml
+git commit -m "chore: 部署可复用 Workflow（workflow_call 支持）"
+git push
+```
+
+部署完成后，外部仓库即可通过以下方式引用：
+
+```yaml
+uses: jijiechen/ai-agent-on-actions/.github/workflows/ai-agent.yml@main
+```
+
+### 后续自动化部署
+
+部署完成后，建议在 `.github/workflows/ai-agent.yml` 的 `permissions` 块中添加 `workflows: write`，以便后续 CI 运行时可自动更新 Workflow 文件：
+
+```yaml
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  workflows: write  # 新增此行
 ```
 
