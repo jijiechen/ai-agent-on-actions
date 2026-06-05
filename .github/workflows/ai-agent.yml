@@ -22,9 +22,9 @@ jobs:
   run-agent:
     runs-on: ubuntu-latest
     if: >
-      (github.event_name == 'issues' && github.event.label.name == 'ai-agent')
+      (github.event_name == 'issues' && github.event.label.name == 'ai-agent' && github.event.issue.state == 'open')
       ||
-      (github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/ai-agent'))
+      (github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/ai-agent') && (github.event.issue.pull_request && github.event.issue.pull_request.state == 'open' || github.event.issue.state == 'open') )
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       COPILOT_HOME:                 /tmp/copilot-home

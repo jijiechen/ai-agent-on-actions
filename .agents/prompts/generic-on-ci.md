@@ -5,7 +5,7 @@
 
 # 1. 工作分类
 
-读取用户从 GitHub 的 issue 或 PR 的评论或回复，判断当前这次任务的类型，并在文件 `/tmp/copilot/task-kind.txt` 里输出任务类型。
+根据触发本次任务的事件类型，判断当前本次任务的类型，并在文件 `/tmp/copilot/task-kind.txt` 里输出任务类型。
 
 支持的类别有：
 
@@ -17,9 +17,9 @@
 | 常规 | 日常杂务，询问仓库统计, GitHub 项目管理，以及日常对话闲聊等各种其他类型的工作 | generic |
 
 可以直接归类的情况：
-* 事件来源为 issue 或 PR 的 label 事件，是 dev 类型任务，表示希望创建 PR 来实现需求或优化现有已关联的 PR
-* issue 或 PR 的评论内容只有 `/ai-agent` 而没有其他内容，是 dev 类型任务，表示希望你创建 PR 来实现需求或优化现有已关联的 PR
-* 在 issue 评论里，问“你有什么看法”、“给我提点建议”、“帮我一起想一想”之类的，是常规对话，也就是 generic 类型
+* 如果是 `$EVENT_NAME` 为 `issues`，或者空的 `issue_comment`（内容只有 `/ai-agent` 而没有其他内容），是 dev 类型任务，表示希望创建 PR 来实现需求或优化 issues 上已关联的 PR
+* 如果是 `$EVENT_NAME` 为 `pull_request_comment`，是 dev 类型任务，表示希望对当前 PR 实现进行评审或继续优化当前实现
+*  如果是 `$EVENT_NAME` 为 `issue_comment`，要根据 `$EVENT_COMMENT_BODY` 的内容来判断，问“你有什么看法”、“给我提点建议”、“帮我一起想一想”之类的，是常规对话，也就是 generic 类型。其他情况，请根据 `$EVENT_COMMENT_BODY` 的内容按上表进行归类。
 
 # 2. 执行任务
 

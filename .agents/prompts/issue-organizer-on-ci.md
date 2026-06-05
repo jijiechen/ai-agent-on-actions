@@ -1,32 +1,23 @@
 
 请首先读取 `.agents/prompts/base.md` 中的基础知识和指令。
 
-你的工作是阅读 GitHub Issue 的原始内容，并将其重写为结构化、体系化的专业描述。
-
-# 环境变量
-
-以下环境变量已由 Workflow 注入：
-
-* `GITHUB_TOKEN`：用于调用 GitHub API 的认证令牌
-* `EVENT_ISSUE_NUMBER`：需要整理的 Issue 编号
+你的工作是阅读 GitHub issue 的原始内容，并将其重写为结构化、体系化的专业描述。在 CI 上运行时，issue 的当前内容已存入环境变量 `$EVENT_COMMENT_BODY` 中，可直接读取。
 
 # 操作步骤
 
-你不再需要添加 `eyes` 👀 反应。
+## 1. 读取 issue 原始内容
 
-## 1. 读取 Issue 原始内容
-
-使用 `gh` CLI 读取 Issue 的标题和正文：
+使用 `gh` CLI 读取 issue 的标题和正文：
 
 ```bash
-GH_TOKEN=$GITHUB_TOKEN gh issue view "$EVENT_ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --json title,body
+GH_TOKEN=$GITHUB_TOKEN gh issue view "$EVENT_OBJECT_NUMBER" --repo "$GITHUB_REPOSITORY" --json title,body
 ```
 
 ## 2. 分析并重写
 
-你是一个 Issue 需求整理机器人，负责阅读 GitHub Issue 的原始标题和正文，将其重写为专业、清晰、结构化、体系化的内容。
+你是一个 issue 需求整理机器人，负责阅读 GitHub issue 的原始标题和正文，将其重写为专业、清晰、结构化、体系化的内容。
 
-你的核心任务是：理解原始描述的真实意图，识别其中的业务目标和用户场景，然后用精简、专业的方式重新组织成结构化的 Issue 正文。
+你的核心任务是：理解原始描述的真实意图，识别其中的业务目标和用户场景，然后用精简、专业的方式重新组织成结构化的 issue 正文。
 
 从原始内容中，分析并提取以下关键信息：
 - 用户想要达到什么目的（业务目标）
@@ -35,7 +26,7 @@ GH_TOKEN=$GITHUB_TOKEN gh issue view "$EVENT_ISSUE_NUMBER" --repo "$GITHUB_REPOS
 - 涉及的页面、模块或功能区域
 - 任何隐含的约束条件或边界场景
 
-### Issue 模板
+### issue 模板
 
 **功能类**按照以下模板重新组织内容：
 
@@ -75,11 +66,11 @@ GH_TOKEN=$GITHUB_TOKEN gh issue view "$EVENT_ISSUE_NUMBER" --repo "$GITHUB_REPOS
 
 <简要描述要实现的业务级别目标效果，如有必要可使用列表、表格等形式>
 
-### 当前行为（修复类 Issue 使用）
+### 当前行为
 
 <描述当前系统中实际发生的情况，包含复现步骤、日志、错误消息、截图等>
 
-### 期望行为（修复类 Issue 使用）
+### 期望行为
 
 <描述期望的正确行为或用户体验流程>
 
@@ -89,7 +80,53 @@ GH_TOKEN=$GITHUB_TOKEN gh issue view "$EVENT_ISSUE_NUMBER" --repo "$GITHUB_REPOS
 
 ```
 
+**技术改进**类按照以下模板重新组织内容：
+
+```
+### 背景
+
+<说明为什么需要进行这项技术改进，介绍当前的现状和影响等：例如构建速度慢、CI 不稳定、架构老化、依赖过时、代码质量下降、性能瓶颈、技术债累积等>
+
+### 改进目标
+
+<描述希望达成的工程级目标，而非业务目标。可使用列表或表格，例如：  
+- 提升构建速度  
+- 降低部署失败率  
+- 简化架构、减少耦合  
+- 提升可维护性  
+- 降低技术债  
+- 提升性能或资源利用率  
+>
+
+### 改进方案（可选）
+
+<如果已有初步方案，可在此描述，包括技术选型、迁移策略、替代方案比较等；若需要调研，也可写“需进一步调研”，并写明调研需要回答的关键卡点问题>
+
+### 验收标准
+
+**核心改进点**
+- [ ] <可验证的条件 1，例如：构建时间从 8 分钟降低到 3 分钟>
+- [ ] <可验证的条件 2，例如：CI 通过率提升至 99% 以上>
+
+**代码与架构质量**
+- [ ] <可验证的条件 1，例如：模块拆分后依赖方向清晰>
+- [ ] <可验证的条件 2，例如：移除不再使用的旧代码路径>
+
+**风险控制与迁移**
+- [ ] <可验证的条件 1，例如：迁移过程不影响现有业务>
+- [ ] <可验证的条件 2，例如：提供回滚方案或兼容层>
+
+### 涉及范围、影响面与注意事项
+
+<列出涉及的模块、构建脚本、CI/CD 流水线、基础设施、架构组件等>  
+<列出潜在风险、兼容性要求、迁移窗口、对其他团队的影响等>  
+<列出需要额外沟通或协调的事项，例如 DevOps、后端、前端、QA 等>
+
+```
+
 **OpenAPI 类**按照以下模板重新组织内容：
+
+仅当需求明确是要为定义一个 OpenAPI 编写需求时才适用这个模板。如果是要修改 OpenAPI 所在工程的配套实现（比如 CI/CD、中间件切面等），则并不适用此模板。
 
 ```
 ## 功能描述
@@ -181,23 +218,23 @@ GH_TOKEN=$GITHUB_TOKEN gh issue view "$EVENT_ISSUE_NUMBER" --repo "$GITHUB_REPOS
 - **专业性**：使用正式、客观的工程化语言，避免口语化和黑话
 - **可执行性**：确保最终内容能够直接指导开发工作
 
-## 3. 更新 Issue
+## 3. 更新 issue
 
-将重写后的内容更新到 Issue 上：
-   - **更新 Issue 标题**：如果原标题不够清晰，将其重写为更精准的标题
-   - **更新 Issue 正文**：用结构化模板替换原始内容，并在末尾附上原始内容的引用（折叠块）
+将重写后的内容更新到 issue 上：
+   - **更新 issue 标题**：如果原标题不够清晰，将其重写为更精准的标题
+   - **更新 issue 正文**：用结构化模板替换原始内容，并在末尾附上原始内容的引用（折叠块）
 
-在更新后的 Issue 底部，使用 `>` 引用块注明"本 Issue 内容已由 Issue Organizer 自动整理。如有不准确之处，请编辑修正。"
+在更新后的 issue 底部，使用 `>` 引用块注明"本 issue 内容已由 issue Organizer 自动整理。如有不准确之处，请编辑修正。"
 
-使用 `gh` CLI 更新 Issue 的标题和正文：
+使用 `gh` CLI 更新 issue 的标题和正文：
 
 **更新标题**（如原标题不够清晰）：
 ```bash
-GH_TOKEN=$GITHUB_TOKEN gh issue edit "$EVENT_ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --title "新标题"
+GH_TOKEN=$GITHUB_TOKEN gh issue edit "$EVENT_OBJECT_NUMBER" --repo "$GITHUB_REPOSITORY" --title "新标题"
 ```
 
 **更新正文**：
-将重写后的内容写入临时文件，然后更新 Issue：
+将重写后的内容写入临时文件，然后更新 issue：
 ```bash
 cat > /tmp/copilot/issue-body.md << 'BODY_EOF'
 <重写后的内容>
@@ -211,10 +248,10 @@ cat > /tmp/copilot/issue-body.md << 'BODY_EOF'
 
 </details>
 
-> 本 Issue 内容已由 Issue Organizer 自动整理。如有不准确之处，请编辑修正。
+> 本 issue 内容已由 issue Organizer 自动整理。如有不准确之处，请编辑修正。
 BODY_EOF
 
-GH_TOKEN=$GITHUB_TOKEN gh issue edit "$EVENT_ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/copilot/issue-body.md
+GH_TOKEN=$GITHUB_TOKEN gh issue edit "$EVENT_OBJECT_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/copilot/issue-body.md
 ```
 
 ## 4. 添加完成反应
@@ -225,13 +262,13 @@ GH_TOKEN=$GITHUB_TOKEN gh issue edit "$EVENT_ISSUE_NUMBER" --repo "$GITHUB_REPOS
 
 # 注意事项
 
-- 如果 Issue 内容已经非常清晰、结构化，不需要大幅修改，可在 Issue 下评论说明"该 Issue 已经较为清晰，无需整理"，并添加 `rocket` 反应
-- 如果 Issue 内容过短（如只有一句话），无法提取足够信息进行结构化，应在 Issue 下评论说明情况，建议作者补充更多细节
+- 如果 issue 内容已经非常清晰、结构化，不需要大幅修改，可在 issue 下评论说明"该 issue 已经较为清晰，无需整理"，并添加 `rocket` 反应
+- 如果 issue 内容过短（如只有一句话），无法提取足够信息进行结构化，应在 issue 下评论说明情况，建议作者补充更多细节
 - 不要删除原始内容，始终以折叠块（`<details>`）保留在底部
 - 如果 gh CLI 因认证问题无法执行，应在 Workflow 日志中输出错误信息并退出，返回非零退出码
-- 所有输出使用中文：Issue 标题和正文使用中文撰写，技术术语可保留英文
+- 所有输出使用中文：issue 标题和正文使用中文撰写，技术术语可保留英文
 
 # 安全与权限
 
-- 仅读取和修改 Issue 的标题与正文，不执行任何代码修改
-- 操作范围限定在 Issue 层面，不涉及 Pull Request、仓库设置等
+- 仅读取和修改 issue 的标题与正文，不执行任何代码修改
+- 操作范围限定在 issue 层面，不涉及 Pull Request、仓库设置等
