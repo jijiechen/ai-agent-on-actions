@@ -1,0 +1,134 @@
+name: AI Agent on Actions
+description: >
+  基于 GitHub Copilot CLI 的自动化 AI Coding Agent。
+  监听 Issue 和评论事件，自动调用大语言模型执行代码开发、测试验证、需求整理等任务。
+
+branding:
+  icon: 'terminal'
+  color: 'purple'
+
+inputs:
+  agent:
+    description: '要运行的 Agent 类型：dev（开发）、tester（测试）、issue-organizer（需求整理）、generic（通用）'
+    required: false
+    default: 'dev'
+  agent_ref:
+    description: 'AI Agent 仓库的版本引用（分支名或标签），用于获取 Prompt 文件'
+    required: false
+    default: 'main'
+  llm_api_base_url:
+    description: 'LLM API 基准地址'
+    required: false
+    default: 'https://api.deepseek.com'
+  llm_model:
+    description: 'LLM 模型名称'
+    required: false
+    default: 'deepseek-v4-flash'
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout AI Agent prompts
+      uses: actions/checkout@v4
+      with:
+        repository: jijiechen/ai-agent-on-actions
+        path: .ai-agent
+        ref: ${{ inputs.agent_ref }}
+        sparse-checkout: |
+          .agents/
+          .github/agents/
+        sparse-checkout-cone-mode: false
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install Copilot CLI
+      shell: bash
+      run: npm install -g @github/copilot
+
+    - name: Configure git
+      shell: bash
+      run: |
+        git config user.name  "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Run Dev Agent
+      if: inputs.agent == 'dev'
+      shell: bash
+      env:
+        COPILOT_HOME: /tmp/copilot-home
+        COPILOT_PROVIDER_TYPE: openai
+        COPILOT_PROVIDER_WIRE_API: completions
+        COPILOT_PROVIDER_BASE_URL: ${{ inputs.llm_api_base_url }}
+        COPILOT_PROVIDER_API_KEY: ${{ env.COPILOT_PROVIDER_API_KEY }}
+        COPILOT_MODEL: ${{ inputs.llm_model }}
+      run: |
+        mkdir -p "${COPILOT_HOME}"
+        copilot -C "${{ github.workspace }}" \
+          --allow-all \
+          --no-ask-user \
+          --mode autopilot \
+          --no-auto-update \
+          --agent dev \
+          -p "$(cat ${{ github.workspace }}/.ai-agent/.agents/prompts/dev-on-ci.md)"
+
+    - name: Run Tester Agent
+      if: inputs.agent == 'tester'
+      shell: bash
+      env:
+        COPILOT_HOME: /tmp/copilot-home
+        COPILOT_PROVIDER_TYPE: openai
+        COPILOT_PROVIDER_WIRE_API: completions
+        COPILOT_PROVIDER_BASE_URL: ${{ inputs.llm_api_base_url }}
+        COPILOT_PROVIDER_API_KEY: ${{ env.COPILOT_PROVIDER_API_KEY }}
+        COPILOT_MODEL: ${{ inputs.llm_model }}
+      run: |
+        mkdir -p "${COPILOT_HOME}"
+        copilot -C "${{ github.workspace }}" \
+          --allow-all \
+          --no-ask-user \
+          --mode autopilot \
+          --no-auto-update \
+          --agent tester \
+          -p "$(cat ${{ github.workspace }}/.ai-agent/.agents/prompts/tester-on-ci.md)"
+
+    - name: Run Issue Organizer Agent
+      if: inputs.agent == 'issue-organizer'
+      shell: bash
+      env:
+        COPILOT_HOME: /tmp/copilot-home
+        COPILOT_PROVIDER_TYPE: openai
+        COPILOT_PROVIDER_WIRE_API: completions
+        COPILOT_PROVIDER_BASE_URL: ${{ inputs.llm_api_base_url }}
+        COPILOT_PROVIDER_API_KEY: ${{ env.COPILOT_PROVIDER_API_KEY }}
+        COPILOT_MODEL: ${{ inputs.llm_model }}
+      run: |
+        mkdir -p "${COPILOT_HOME}"
+        copilot -C "${{ github.workspace }}" \
+          --allow-all \
+          --no-ask-user \
+          --mode autopilot \
+          --no-auto-update \
+          --agent issue-organizer \
+          -p "$(cat ${{ github.workspace }}/.ai-agent/.agents/prompts/issue-organizer-on-ci.md)"
+
+    - name: Run Generic Agent
+      if: inputs.agent == 'generic'
+      shell: bash
+      env:
+        COPILOT_HOME: /tmp/copilot-home
+        COPILOT_PROVIDER_TYPE: openai
+        COPILOT_PROVIDER_WIRE_API: completions
+        COPILOT_PROVIDER_BASE_URL: ${{ inputs.llm_api_base_url }}
+        COPILOT_PROVIDER_API_KEY: ${{ env.COPILOT_PROVIDER_API_KEY }}
+        COPILOT_MODEL: ${{ inputs.llm_model }}
+      run: |
+        mkdir -p "${COPILOT_HOME}"
+        copilot -C "${{ github.workspace }}" \
+          --allow-all \
+          --no-ask-user \
+          --mode autopilot \
+          --no-auto-update \
+          -p "$(cat ${{ github.workspace }}/.ai-agent/.agents/prompts/generic-on-ci.md)"
