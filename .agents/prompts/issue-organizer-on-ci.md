@@ -58,7 +58,7 @@ GH_TOKEN=$GITHUB_TOKEN gh issue edit "$EVENT_ISSUE_NUMBER" --repo "$GITHUB_REPOS
 
 ### 4. 添加完成反应
 
-任务成功完成后，必须按照结果向原始评论或 PR/Issue 添加反应。添加反应相关的方法在 `.agents/prompts/base.md` 中已有介绍：
+任务成功完成后，必须按照结果向“事件来源”添加 GitHub 反应。添加反应相关的方法在 `.agents/prompts/base.md` 中已有介绍：
 * 如何任务正常完成，移除 `eyes`，添加 `rocket` 🚀 反应
 * 遇到问题无法继续时：移除 `eyes`，添加 `confused` 😕 反应
 
