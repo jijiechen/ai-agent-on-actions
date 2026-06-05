@@ -1,0 +1,36 @@
+# 示例：直接调用 AI Agent 执行特定任务
+#
+# 如果你只需要在某个特定步骤中调用 AI Agent 执行单一类型的任务，
+# 可以使用 Composite Action 方式直接指定 Agent 类型。
+
+name: AI Agent（按需调用）
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_description:
+        description: '任务描述（将通过环境变量传递给 Agent）'
+        required: true
+        type: string
+
+jobs:
+  dev-task:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run AI Agent
+        uses: jijiechen/ai-agent-on-actions@main
+        env:
+          COPILOT_PROVIDER_API_KEY: ${{ secrets.LLM_API_KEY }}
+        with:
+          agent: dev  # 可选：dev / tester / issue-organizer / generic
+          # llm_api_base_url: ${{ vars.LLM_API_BASE_URL }}
+          # llm_model: ${{ vars.LLM_MODEL_EXPERT }}
