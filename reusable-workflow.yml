@@ -1,0 +1,175 @@
+name: AI Agent
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+  workflow_call:
+    inputs:
+      agent_ref:
+        description: 'AI Agent 仓库的版本引用（分支名或标签），用于同步获取 Prompt 文件'
+        type: string
+        required: false
+        default: 'main'
+      llm_api_base_url:
+        description: 'LLM API 基准地址'
+        type: string
+        required: false
+        default: 'https://api.deepseek.com'
+      llm_model_generic:
+        description: '用于常规任务和需求整理的模型名称'
+        type: string
+        required: false
+        default: 'deepseek-v4-flash'
+      llm_model_expert:
+        description: '用于开发和测试任务的模型名称'
+        type: string
+        required: false
+        default: 'deepseek-v4-flash'
+    secrets:
+      LLM_API_KEY:
+        description: '调用大语言模型的 API Key'
+        required: true
+
+concurrency:
+  group: ai-agent-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+env:
+  MAIN_BRANCH: main
+  COPILOT_HOME: /tmp/copilot-home
+  COPILOT_PROVIDER_TYPE: openai
+  COPILOT_PROVIDER_WIRE_API: completions
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    if: >
+      (github.event_name == 'issues' && github.event.label.name == 'ai-agent')
+      ||
+      (github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/ai-agent '))
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      COPILOT_PROVIDER_BASE_URL: "${{ inputs.llm_api_base_url || vars.LLM_API_BASE_URL || 'https://api.deepseek.com' }}"
+      COPILOT_MODEL: ${{ inputs.llm_model_expert || vars.LLM_MODEL_EXPERT || 'deepseek-v4-flash' }}
+      EVENT_NAME: ${{ github.event_name == 'issue_comment' && github.event.issue.pull_request && 'pull_request_comment' || github.event_name }}
+      EVENT_OBJECT_NUMBER: ${{ github.event.issue.number }}
+      EVENT_COMMENT_BODY: >
+        ${{
+          github.event_name == 'issue_comment'
+          && toJson(github.event.comment.body)
+          || toJson(github.event.issue.body)
+        }}
+      EVENT_COMMENT_AUTHOR: >
+        ${{
+          github.event_name == 'issue_comment'
+          && github.event.comment.user.login
+          || github.event.issue.user.login
+        }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout AI Agent prompts
+        uses: actions/checkout@v4
+        with:
+          repository: jijiechen/ai-agent-on-actions
+          path: .ai-agent
+          ref: ${{ inputs.agent_ref || 'main' }}
+          sparse-checkout: |
+            .agents/
+            .github/agents/
+          sparse-checkout-cone-mode: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Configure git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Run Generic Agent
+        id: generic-agent
+        env: 
+          COPILOT_PROVIDER_API_KEY: "${{ secrets.LLM_API_KEY }}"
+          COPILOT_MODEL: ${{ inputs.llm_model_generic || vars.LLM_MODEL_GENERIC || 'deepseek-v4-flash' }}
+        run: |
+          mkdir -p "${COPILOT_HOME}"
+
+          copilot -C "${{ github.workspace }}" \
+            --allow-all \
+            --no-ask-user \
+            --mode autopilot \
+            --no-auto-update \
+            -p "$(cat ${{ github.workspace }}/.ai-agent/.agents/prompts/generic-on-ci.md)"
+          
+          if [[ -f "/tmp/copilot/task-kind.txt" ]]; then
+            AGENT_TASK_KIND=$(cat /tmp/copilot/task-kind.txt)
+            echo "AGENT_TASK_KIND=$AGENT_TASK_KIND" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run Issue Organizer
+        id: issue-organizer-agent
+        if: contains(steps.generic-agent.outputs.AGENT_TASK_KIND, 'issue_refinement')
+        env: 
+          COPILOT_PROVIDER_API_KEY: "${{ secrets.LLM_API_KEY }}"
+          COPILOT_MODEL: ${{ inputs.llm_model_generic || vars.LLM_MODEL_GENERIC || 'deepseek-v4-flash' }}
+        run: |
+          mkdir -p "${COPILOT_HOME}"
+
+          copilot -C "${{ github.workspace }}" \
+            --allow-all \
+            --no-ask-user \
+            --mode autopilot \
+            --no-auto-update \
+            --agent issue-organizer \
+            -p "$(cat ${{ github.workspace }}/.ai-agent/.agents/prompts/issue-organizer-on-ci.md)"
+
+      - name: Run Dev agent
+        id: dev-agent
+        if: contains(steps.generic-agent.outputs.AGENT_TASK_KIND, 'dev')
+        env: 
+          COPILOT_PROVIDER_API_KEY: "${{ secrets.LLM_API_KEY }}"
+          COPILOT_MODEL: ${{ inputs.llm_model_expert || vars.LLM_MODEL_EXPERT || 'deepseek-v4-flash' }}
+        run: |
+          mkdir -p "${COPILOT_HOME}"
+
+          copilot -C "${{ github.workspace }}" \
+            --allow-all \
+            --no-ask-user \
+            --mode autopilot \
+            --no-auto-update \
+            --agent dev \
+            -p "$(cat ${{ github.workspace }}/.ai-agent/.agents/prompts/dev-on-ci.md)"
+
+      - name: Run Test agent
+        id: tester-agent
+        if: contains(steps.generic-agent.outputs.AGENT_TASK_KIND, 'test')
+        env: 
+          COPILOT_PROVIDER_API_KEY: "${{ secrets.LLM_API_KEY }}"
+          COPILOT_MODEL: ${{ inputs.llm_model_expert || vars.LLM_MODEL_EXPERT || 'deepseek-v4-flash' }}
+        run: |
+          mkdir -p "${COPILOT_HOME}"
+
+          copilot -C "${{ github.workspace }}" \
+            --allow-all \
+            --no-ask-user \
+            --mode autopilot \
+            --no-auto-update \
+            --agent tester \
+            -p "$(cat ${{ github.workspace }}/.ai-agent/.agents/prompts/tester-on-ci.md)"
