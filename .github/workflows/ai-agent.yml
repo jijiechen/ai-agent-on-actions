@@ -100,7 +100,6 @@ jobs:
             --no-ask-user \
             --mode autopilot \
             --no-auto-update \
-            --agent issue-organizer \
             -p "$(cat ${{ github.workspace }}/.agents/prompts/issue-organizer-on-ci.md)"
 
       - name: Run Dev agent
@@ -117,7 +116,6 @@ jobs:
             --no-ask-user \
             --mode autopilot \
             --no-auto-update \
-            --agent dev \
             -p "$(cat ${{ github.workspace }}/.agents/prompts/dev-on-ci.md)"
 
       - name: Run Test agent
@@ -134,5 +132,4 @@ jobs:
             --no-ask-user \
             --mode autopilot \
             --no-auto-update \
-            --agent tester \
             -p "$(cat ${{ github.workspace }}/.agents/prompts/tester-on-ci.md)"
