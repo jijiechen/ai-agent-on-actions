@@ -120,12 +120,7 @@ steps:
 uses: jijiechen/ai-agent-on-actions/.github/workflows/ai-agent.yml@v1.0.0
 ```
 
-并使用 `agent_ref` 参数确保 Prompt 文件版本一致：
-
-```yaml
-with:
-  agent_ref: 'v1.0.0'
-```
+Prompt 文件已内联在 Action 定义中，无需额外维护版本一致性。
 
 ## 代理配置
 
