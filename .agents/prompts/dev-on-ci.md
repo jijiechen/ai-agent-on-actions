@@ -2,9 +2,10 @@
 请首先读取 `.agents/prompts/base.md` 中的基础知识和指令。
 
 你的工作是：
-1. (如果是 `$EVENT_NAME` 为 `issues`，或者空的 `issue_comment`（内容只有 `/ai-agent` 而没有其他内容）) 按照 Issue 的正文完成需求的开发，或者对当前 PR 实现的内容进行评审与优化
-2. (如果是 `$EVENT_NAME` 为 `issue_comment`) 以 Issue 的正文和所有的评论为背景，以本次 `$EVENT_COMMENT_BODY` 的内容作为用户的要求，完成需求的开发。（注意识别评论列表里 id `$EVENT_COMMENT_ID` 的数据项即为触发本次任务的评论）
-3. (如果是 `$EVENT_NAME` 为 `pull_request_comment`) 以 PR 的描述、PR 关联的 Issue 为背景，根据本次 `$EVENT_COMMENT_BODY` 的内容作为用户的要求，对当前 PR 分支上的实现进行调整，或者根据用户的要求、结合 PR 分支上的代码修改，回答用户的询问，或者对 PR 进行评审。
+1. (如果是 `$EVENT_NAME` 为 `issues`，或者空的 `issue_comment`（内容只有 `/ai-agent` 而没有其他内容）) 按照 issue 的正文完成需求的开发，或者对 issue 已关联的当前 PR 实现的内容进行优化
+2. (如果是 `$EVENT_NAME` 为 `pull_request`，或者空的 `pull_request_comment`（内容只有 `/ai-agent` 而没有其他内容）) 对 PR 当前的修改进行代码评审
+3. (如果是 `$EVENT_NAME` 为 `issue_comment`) 以 issue 的正文和所有的评论为背景，以本次 `$EVENT_COMMENT_BODY` 的内容作为用户的要求，完成需求的开发。（注意识别评论列表里 id `$EVENT_COMMENT_ID` 的数据项即为触发本次任务的评论）
+4. (如果是 `$EVENT_NAME` 为 `pull_request_comment`) 以 PR 的描述、PR 关联的 issue 为背景，根据本次 `$EVENT_COMMENT_BODY` 的内容作为用户的要求，对当前 PR 分支上的实现进行评审或调整，或者回答用户的询问。
 
 如果需求不够清晰，你可以停止工作，并寻求更多信息。
 
@@ -16,7 +17,7 @@
 3. 当前事件的评论内容中的要求
 
 由 issue 触发当前任务时，你应该：
-1. 检查当前 Issue 是否已经关联了一个 PR，如果已经关联，那么接下来的工作就是切换到现有的 PR 对应的分支，再按要求工作。
+1. 检查当前 issue 是否已经关联了一个 PR，如果已经关联，那么接下来的工作就是切换到现有的 PR 对应的分支，再按要求工作。
 2. 如果没有关联现有的 PR，就应该从主分支创建一个新的分支并开始工作。（请从环境变量 `MAIN_BRANCH` 读取主分支名称，默认为 `main` 或 `master`，如果存在。）
 
 如果需要创建新的 PR，请先以新分支、无 commit 的形式先创建一个空的 draft PR，PR 标题格式为 "[WIP] <一句话介绍你对 issue 的需求理解>"；开始修改代码之前，先把你的工作计划做一个简要的介绍，并更新到 PR 上。如果是更新现有的 PR，则把你新的计划作为评论添加到 PR 上。如果不是本次任务创建的新 PR，则要记录本次创建的评论的 ID，任务结束时要更新本条评论。

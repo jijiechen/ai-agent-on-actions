@@ -18,7 +18,8 @@
 
 可以直接归类的情况：
 * 如果是 `$EVENT_NAME` 为 `issues`，或者空的 `issue_comment`（内容只有 `/ai-agent` 而没有其他内容），是 dev 类型任务，表示希望创建 PR 来实现需求或优化 issues 上已关联的 PR
-* 如果是 `$EVENT_NAME` 为 `pull_request_comment`，是 dev 类型任务，表示希望对当前 PR 实现进行评审或继续优化当前实现
+* 如果是 `$EVENT_NAME` 为 `pull_request`，或者空的 `pull_request_comment`（内容只有 `/ai-agent` 而没有其他内容），是 dev 类型任务，表示希望对 PR 的代码修改进行评审
+* 如果是 `$EVENT_NAME` 为 `pull_request_comment`，是 dev 类型任务，表示希望对当前 PR 实现进行评审、讨论或继续优化
 *  如果是 `$EVENT_NAME` 为 `issue_comment`，要根据 `$EVENT_COMMENT_BODY` 的内容来判断，问“你有什么看法”、“给我提点建议”、“帮我一起想一想”之类的，是常规对话，也就是 generic 类型。其他情况，请根据 `$EVENT_COMMENT_BODY` 的内容按上表进行归类。
 
 # 2. 执行任务

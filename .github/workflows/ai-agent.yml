@@ -3,6 +3,8 @@ name: AI Agent
 on:
   issues:
     types: [labeled]
+  pull_request:
+    types: [labeled]
   issue_comment:
     types: [created]
 

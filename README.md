@@ -29,6 +29,8 @@
 name: AI Agent
 
 on:
+  pull_request:
+    types: [labeled]
   issues:
     types: [labeled]
   issue_comment:
@@ -37,10 +39,9 @@ on:
 jobs:
   run-ai-agent:
     if: >
-      (github.event_name == 'issues' && github.event.label.name == 'ai-agent')
+      (github.event_name == 'issues' && github.event.label.name == 'ai-agent' && github.event.issue.state == 'open')
       ||
-      (github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/ai-agent '))
-
+      (github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/ai-agent') && (github.event.issue.pull_request && github.event.issue.pull_request.state == 'open' || github.event.issue.state == 'open'))
     uses: jijiechen/ai-agent-on-actions/.github/workflows/ai-agent.yml@main
     permissions:
       contents: write
@@ -82,7 +83,7 @@ jobs:
 
 | Agent | 用途 |
 |-------|------|
-| **dev** | 开发 Agent，负责实现新功能或修复已发现的问题，编写自动化测试 |
+| **dev** | 开发 Agent，负责实现新功能或修复已发现的问题，编写自动化测试；针对对现有 PR 做代码评审 |
 | **tester** | 测试 Agent，负责执行黑盒功能测试，验证业务实现的正确性或修复的有效性 |
 | **issue-organizer** | 需求整理 Agent，负责将混乱的 Issue 描述重写为清晰、结构化的内容 |
 
